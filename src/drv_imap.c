@@ -1939,7 +1939,7 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 		strftime( datetimestr, sizeof(datetimestr),
 		          "%d-%b-%Y %H:%M:%S %z", datetime );
 		imap_exec( ctx, &cmd->gen, imap_store_msg_p2,
-	                   "APPEND \"%s\" %s \"%s\"",
+	                   "APPEND \"%s\" %s\"%s\" ",
 	                   buf, flagstr, datetimestr );
 	} else {
 		imap_exec( ctx, &cmd->gen, imap_store_msg_p2,
