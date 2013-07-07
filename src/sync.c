@@ -281,6 +281,7 @@ copy_msg( copy_vars_t *vars )
 
 	t ^= 1;
 	vars->data.flags = vars->msg->flags;
+	vars->data.time = vars->msg->time;
 	DRIVER_CALL_RET(fetch_msg( svars->ctx[t], vars->msg, &vars->data, msg_fetched, vars ));
 }
 
@@ -306,6 +307,7 @@ msg_fetched( int sts, void *aux )
 		}
 
 		vars->msg->flags = vars->data.flags;
+		vars->msg->time = vars->data.time;
 
 		scr = (svars->drv[1-t]->flags / DRV_CRLF) & 1;
 		tcr = (svars->drv[t]->flags / DRV_CRLF) & 1;
@@ -959,7 +961,7 @@ box_selected( int sts, void *aux )
 		}
 	}
 	if ((chan->ops[S] & (OP_NEW|OP_RENEW)) && chan->max_messages)
-		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS;
+		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS|OPEN_TIME;
 	if (line)
 		for (srec = svars->srecs; srec; srec = srec->next) {
 			if (srec->status & S_DEAD)
