@@ -36,6 +36,7 @@
 #include <sys/file.h>
 #include <errno.h>
 #include <time.h>
+#include <utime.h>
 
 #define USE_DB 1
 #ifdef __linux__
@@ -292,6 +293,7 @@ typedef struct {
 	int size;
 	unsigned uid:31, recent:1;
 	char tuid[TUIDL];
+	time_t time;
 } msg_t;
 
 typedef struct {
@@ -540,6 +542,9 @@ maildir_compare( const void *l, const void *r )
 
 	/* No UID, so sort by arrival date. We should not do this, but we rely
 	   on the suggested unique file name scheme - we have no choice. */
+	if ((ret = lm->time - rm->time))
+		return ret;
+
 	/* The first field are always the seconds. Alphabetical sort should be
 	   faster than numeric. */
 	if (!(ldot = strchr( lm->base, '.' )) || !(rdot = strchr( rm->base, '.' )))
@@ -714,6 +719,7 @@ maildir_scan( maildir_store_t *ctx, msglist_t *msglist )
 					entry->recent = i;
 					entry->size = 0;
 					entry->tuid[0] = 0;
+					entry->time = 0;
 				}
 			}
 			closedir( d );
@@ -826,7 +832,7 @@ maildir_scan( maildir_store_t *ctx, msglist_t *msglist )
 				entry->base = nfmalloc( fnl );
 				memcpy( entry->base, buf + bl + 4, fnl );
 			}
-			if (ctx->gen.opts & OPEN_SIZE) {
+			if (ctx->gen.opts & OPEN_SIZE || ctx->gen.opts & OPEN_TIME) {
 				if (stat( buf, &st )) {
 					if (errno != ENOENT) {
 						sys_error( "Maildir error: cannot stat %s", buf );
@@ -834,7 +840,10 @@ maildir_scan( maildir_store_t *ctx, msglist_t *msglist )
 					}
 					goto retry;
 				}
-				entry->size = st.st_size;
+				if (ctx->gen.opts & OPEN_SIZE)
+					entry->size = st.st_size;
+				if (ctx->gen.opts & OPEN_TIME)
+					entry->time = st.st_mtime;
 			}
 			if ((ctx->gen.opts & OPEN_FIND) && uid >= ctx->newuid) {
 				if (!(f = fopen( buf, "r" ))) {
@@ -870,6 +879,7 @@ maildir_init_msg( maildir_store_t *ctx, maildir_message_t *msg, msg_t *entry )
 	msg->base = entry->base;
 	entry->base = 0; /* prevent deletion */
 	msg->gen.size = entry->size;
+	msg->gen.time = entry->time;
 	msg->gen.srec = 0;
 	strncpy( msg->gen.tuid, entry->tuid, TUIDL );
 	if (entry->recent)
@@ -1125,6 +1135,7 @@ maildir_fetch_msg( store_t *gctx, message_t *gmsg, msg_data_t *data,
 	}
 	fstat( fd, &st );
 	data->len = st.st_size;
+	data->time = st.st_mtime;
 	data->data = nfmalloc( data->len );
 	if (read( fd, data->data, data->len ) != data->len) {
 		sys_error( "Maildir error: cannot read %s", buf );
@@ -1161,8 +1172,9 @@ maildir_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 	const char *box;
 	int ret, fd, bl, uid;
 	char buf[_POSIX_PATH_MAX], nbuf[_POSIX_PATH_MAX], fbuf[NUM_FLAGS + 3], base[128];
+	struct utimbuf utimebuf;
 
-	bl = nfsnprintf( base, sizeof(base), "%ld.%d_%d.%s", (long)time( 0 ), Pid, ++MaildirCount, Hostname );
+	bl = nfsnprintf( base, sizeof(base), "%ld.%d_%d.%s", (long)data->time, Pid, ++MaildirCount, Hostname );
 	if (!to_trash) {
 #ifdef USE_DB
 		if (ctx->db) {
@@ -1226,6 +1238,16 @@ maildir_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 		cb( DRV_BOX_BAD, 0, aux );
 		return;
 	}
+
+	/* Set atime and mtime according to INTERNALDATE or mtime of source message */
+	utimebuf.actime = data->time;
+	utimebuf.modtime = data->time;
+	if (utime( buf, &utimebuf ) < 0) {
+		sys_error( "Maildir error: cannot set times for %s", buf );
+		cb( DRV_BOX_BAD, 0, aux );
+		return;
+	}
+
 	/* Moving seen messages to cur/ is strictly speaking incorrect, but makes mutt happy. */
 	nfsnprintf( nbuf, sizeof(nbuf), "%s/%s/%s%s", box, subdirs[!(data->flags & F_SEEN)], base, fbuf );
 	if (rename( buf, nbuf )) {

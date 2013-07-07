@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 typedef struct imap_server_conf {
 	struct imap_server_conf *next;
@@ -660,6 +661,8 @@ parse_fetch( imap_store_t *ctx, list_t *list )
 	struct imap_cmd *cmdp;
 	int uid = 0, mask = 0, status = 0, size = 0;
 	unsigned i;
+	struct tm datetime;
+	time_t time = 0;
 
 	if (!is_list( list )) {
 		error( "IMAP error: bogus FETCH response\n" );
@@ -701,6 +704,16 @@ parse_fetch( imap_store_t *ctx, list_t *list )
 					status |= M_FLAGS;
 				} else
 					error( "IMAP error: unable to parse FLAGS\n" );
+			} else if (!strcmp( "INTERNALDATE", tmp->val )) {
+				tmp = tmp->next;
+				if (is_atom( tmp )) {
+					if (strptime( tmp->val, "%d-%b-%Y %H:%M:%S %z", &datetime )) {
+						time = mktime( &datetime );
+						status |= M_TIME;
+					} else
+						error( "IMAP error: unable to parse INTERNALDATE format\n" );
+				} else
+					error( "IMAP error: unable to parse INTERNALDATE\n" );
 			} else if (!strcmp( "RFC822.SIZE", tmp->val )) {
 				tmp = tmp->next;
 				if (is_atom( tmp ))
@@ -746,6 +759,8 @@ parse_fetch( imap_store_t *ctx, list_t *list )
 		msgdata->len = size;
 		if (status & M_FLAGS)
 			msgdata->flags = mask;
+		if (status & M_TIME)
+			msgdata->time = time;
 	} else if (uid) { /* ignore async flag updates for now */
 		/* XXX this will need sorting for out-of-order (multiple queries) */
 		cur = nfcalloc( sizeof(*cur) );
@@ -755,6 +770,7 @@ parse_fetch( imap_store_t *ctx, list_t *list )
 		cur->gen.uid = uid;
 		cur->gen.flags = mask;
 		cur->gen.status = status;
+		cur->gen.time = time;
 		cur->gen.size = size;
 		cur->gen.srec = 0;
 		if (tuid)
@@ -1630,8 +1646,9 @@ static int
 imap_submit_load( imap_store_t *ctx, const char *buf, int tuids, struct imap_cmd_refcounted_state *sts )
 {
 	return imap_exec( ctx, imap_refcounted_new_cmd( sts ), imap_refcounted_done_box,
-	                  "UID FETCH %s (UID%s%s%s)", buf,
+	                  "UID FETCH %s (UID%s%s%s%s)", buf,
 	                  (ctx->gen.opts & OPEN_FLAGS) ? " FLAGS" : "",
+	                  (ctx->gen.opts & OPEN_TIME) ? " INTERNALDATE" : "",
 	                  (ctx->gen.opts & OPEN_SIZE) ? " RFC822.SIZE" : "",
 	                  tuids ? " BODY.PEEK[HEADER.FIELDS (X-TUID)]" : "");
 }
@@ -1648,8 +1665,9 @@ imap_fetch_msg( store_t *ctx, message_t *msg, msg_data_t *data,
 	cmd->gen.gen.param.uid = msg->uid;
 	cmd->msg_data = data;
 	imap_exec( (imap_store_t *)ctx, &cmd->gen.gen, imap_done_simple_msg,
-	           "UID FETCH %d (%sBODY.PEEK[])",
-	           msg->uid, (msg->status & M_FLAGS) ? "" : "FLAGS " );
+	           "UID FETCH %d (%s%sBODY.PEEK[])", msg->uid,
+	           (msg->status & M_FLAGS) ? "" : "FLAGS ",
+	           (msg->status & M_TIME) ? "" : "INTERNALDATE " );
 }
 
 /******************* imap_set_flags *******************/
@@ -1798,7 +1816,8 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 	imap_store_t *ctx = (imap_store_t *)gctx;
 	struct imap_cmd_out_uid *cmd;
 	int d;
-	char flagstr[128], buf[1024];
+	char flagstr[128], datetimestr[64], buf[1024];
+	struct tm *datetime;
 
 	d = 0;
 	if (data->flags) {
@@ -1825,8 +1844,18 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 			return;
 		}
 	}
-	imap_exec( ctx, &cmd->gen, imap_store_msg_p2,
-	           "APPEND \"%s\" %s", buf, flagstr );
+	datetime = localtime( &(data->time) );
+	if (datetime) {
+		strftime( datetimestr, sizeof(datetimestr),
+		          "%d-%b-%Y %H:%M:%S %z", datetime );
+		imap_exec( ctx, &cmd->gen, imap_store_msg_p2,
+	                   "APPEND \"%s\" %s \"%s\"",
+	                   buf, flagstr, datetimestr );
+	} else {
+		imap_exec( ctx, &cmd->gen, imap_store_msg_p2,
+		           "APPEND \"%s\" %s",
+		           buf, flagstr );
+	}
 }
 
 static void

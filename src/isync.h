@@ -188,6 +188,7 @@ typedef struct group_conf {
 #define M_RECENT       (1<<0) /* unsyncable flag; maildir_* depend on this being 1<<0 */
 #define M_DEAD         (1<<1) /* expunged */
 #define M_FLAGS        (1<<2) /* flags fetched */
+#define M_TIME         (1<<3) /* time fetched */
 
 #define TUIDL 12
 
@@ -199,6 +200,7 @@ typedef struct message {
 	int uid;
 	unsigned char flags, status;
 	char tuid[TUIDL];
+	time_t time;
 } message_t;
 
 /* For opts, both in store and driver_t->select() */
@@ -210,6 +212,7 @@ typedef struct message {
 #define OPEN_SETFLAGS   (1<<6)
 #define OPEN_APPEND     (1<<7)
 #define OPEN_FIND       (1<<8)
+#define OPEN_TIME       (1<<9)
 
 typedef struct store {
 	struct store *next;
@@ -246,6 +249,7 @@ typedef struct {
 	char *data;
 	int len;
 	unsigned char flags;
+	time_t time;
 } msg_data_t;
 
 #define DRV_OK          0
