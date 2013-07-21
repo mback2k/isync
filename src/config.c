@@ -161,6 +161,8 @@ getopt_helper( conffile_t *cfile, int *cops, int ops[], char **sync_state )
 				*cops |= OP_DELETE;
 			else if (!strcasecmp( "Flags", arg ))
 				*cops |= OP_FLAGS;
+			else if (!strcasecmp( "Time", arg ))
+				*cops |= OP_TIME;
 			else if (!strcasecmp( "PullReNew", arg ))
 				ops[S] |= OP_RENEW;
 			else if (!strcasecmp( "PullNew", arg ))
@@ -169,6 +171,8 @@ getopt_helper( conffile_t *cfile, int *cops, int ops[], char **sync_state )
 				ops[S] |= OP_DELETE;
 			else if (!strcasecmp( "PullFlags", arg ))
 				ops[S] |= OP_FLAGS;
+			else if (!strcasecmp( "PullTime", arg ))
+				ops[S] |= OP_TIME;
 			else if (!strcasecmp( "PushReNew", arg ))
 				ops[M] |= OP_RENEW;
 			else if (!strcasecmp( "PushNew", arg ))
@@ -177,6 +181,8 @@ getopt_helper( conffile_t *cfile, int *cops, int ops[], char **sync_state )
 				ops[M] |= OP_DELETE;
 			else if (!strcasecmp( "PushFlags", arg ))
 				ops[M] |= OP_FLAGS;
+			else if (!strcasecmp( "PushTime", arg ))
+				ops[M] |= OP_TIME;
 			else if (!strcasecmp( "All", arg ) || !strcasecmp( "Full", arg ))
 				*cops |= XOP_PULL|XOP_PUSH;
 			else if (strcasecmp( "None", arg ) && strcasecmp( "Noop", arg )) {
