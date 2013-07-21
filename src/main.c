@@ -56,6 +56,7 @@ PACKAGE " " VERSION " - mailbox synchronizer\n"
 "  -n, --new		propagate new messages\n"
 "  -d, --delete		propagate message deletions\n"
 "  -f, --flags		propagate message flag changes\n"
+"  -t, --time           propagate message modification times\n"
 "  -N, --renew		propagate previously not propagated new messages\n"
 "  -L, --pull		propagate from master to slave\n"
 "  -H, --push		propagate from slave to master\n"
@@ -68,7 +69,7 @@ PACKAGE " " VERSION " - mailbox synchronizer\n"
 "  -v, --version		display version\n"
 "  -h, --help		display this help message\n"
 "\nIf neither --pull nor --push are specified, both are active.\n"
-"If neither --new, --delete, --flags nor --renew are specified, all are active.\n"
+"If neither --new, --delete, --flags, --time nor --renew are specified, all are active.\n"
 "Direction and operation can be concatenated like --pull-new, etc.\n"
 "--create and --expunge can be suffixed with -master/-slave. Read the man page.\n"
 "\nSupported mailbox formats are: IMAP4rev1, Maildir\n"
@@ -324,6 +325,8 @@ main( int argc, char **argv )
 						op |= OP_DELETE;
 					else if (!strcmp( opt, "flags" ))
 						op |= OP_FLAGS;
+					else if (!strcmp( opt, "time" ))
+						op |= OP_TIME;
 					else {
 					  badopt:
 						error( "Unknown option '%s'\n", argv[mvars->oind - 1] );
@@ -386,6 +389,7 @@ main( int argc, char **argv )
 		case 'n':
 		case 'd':
 		case 'f':
+		case 't':
 		case 'N':
 			--ochar;
 			op = 0;
@@ -397,6 +401,8 @@ main( int argc, char **argv )
 					op |= OP_DELETE;
 				else if (*ochar == 'f')
 					op |= OP_FLAGS;
+				else if (*ochar == 't')
+					op |= OP_TIME;
 				else if (*ochar == 'N')
 					op |= OP_RENEW;
 				else
