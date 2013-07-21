@@ -125,15 +125,16 @@ typedef struct {
 #define OP_RENEW           (1<<1)
 #define OP_DELETE          (1<<2)
 #define OP_FLAGS           (1<<3)
-#define  OP_MASK_TYPE      (OP_NEW|OP_RENEW|OP_DELETE|OP_FLAGS) /* asserted in the target ops */
-#define OP_EXPUNGE         (1<<4)
-#define OP_CREATE          (1<<5)
-#define XOP_PUSH           (1<<6)
-#define XOP_PULL           (1<<7)
+#define OP_TIME            (1<<4)
+#define  OP_MASK_TYPE      (OP_NEW|OP_RENEW|OP_DELETE|OP_FLAGS|OP_TIME) /* asserted in the target ops */
+#define OP_EXPUNGE         (1<<5)
+#define OP_CREATE          (1<<6)
+#define XOP_PUSH           (1<<7)
+#define XOP_PULL           (1<<8)
 #define  XOP_MASK_DIR      (XOP_PUSH|XOP_PULL)
-#define XOP_HAVE_TYPE      (1<<8)
-#define XOP_HAVE_EXPUNGE   (1<<9)
-#define XOP_HAVE_CREATE    (1<<10)
+#define XOP_HAVE_TYPE      (1<<9)
+#define XOP_HAVE_EXPUNGE   (1<<10)
+#define XOP_HAVE_CREATE    (1<<11)
 
 typedef struct driver driver_t;
 
