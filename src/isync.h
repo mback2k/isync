@@ -166,6 +166,7 @@ typedef struct channel_conf {
 	string_list_t *patterns;
 	int ops[2];
 	unsigned max_messages; /* for slave only */
+	unsigned keep_modification_time:1;
 } channel_conf_t;
 
 typedef struct group_conf {

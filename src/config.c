@@ -360,6 +360,8 @@ load_config( const char *where, int pseudo )
 					max_size = parse_size( &cfile );
 				else if (!strcasecmp( "MaxMessages", cfile.cmd ))
 					channel->max_messages = parse_int( &cfile );
+				else if (!strcasecmp( "KeepModificationTime", cfile.cmd ))
+					channel->keep_modification_time = parse_bool( &cfile );
 				else if (!strcasecmp( "Pattern", cfile.cmd ) ||
 				         !strcasecmp( "Patterns", cfile.cmd ))
 				{

@@ -945,6 +945,8 @@ box_selected( int sts, void *aux )
 				opts[1-t] |= OPEN_FLAGS;
 			if (chan->stores[t]->max_size)
 				opts[1-t] |= OPEN_SIZE;
+			if (chan->keep_modification_time)
+				opts[1-t] |= OPEN_TIME;
 		}
 		if (chan->ops[t] & OP_EXPUNGE) {
 			opts[t] |= OPEN_EXPUNGE;
@@ -957,7 +959,7 @@ box_selected( int sts, void *aux )
 		}
 	}
 	if ((chan->ops[S] & (OP_NEW|OP_RENEW)) && chan->max_messages)
-		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS|OPEN_TIME;
+		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS;
 	if (line)
 		for (srec = svars->srecs; srec; srec = srec->next) {
 			if (srec->status & S_DEAD)
