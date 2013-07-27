@@ -405,6 +405,13 @@ If \fIcount\fR is 0, the maximum number of messages is \fBunlimited\fR
 (Default: \fI0\fR).
 ..
 .TP
+\fBKeepModificationTime\fR \fIyes\fR|\fIno\fR
+Selects whether message modification timestamps should be kept while
+synchronizing messages. Enabling this makes sense in order to keep the
+message order intact by not disrupting the original message timestamp.
+(Default: \fIno\fR)
+..
+.TP
 \fBSync\fR {\fINone\fR|[\fIPull\fR] [\fIPush\fR] [\fINew\fR] [\fIReNew\fR] [\fIDelete\fR] [\fIFlags\fR]|\fIAll\fR}
 Select the synchronization operation(s) to perform:
 .br
