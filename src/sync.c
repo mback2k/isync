@@ -955,12 +955,9 @@ box_selected( int sts, void *aux )
 			} else if (chan->stores[1-t]->trash && chan->stores[1-t]->trash_remote_new)
 				opts[t] |= OPEN_NEW|OPEN_FLAGS;
 		}
-		if (chan->ops[t] & OP_TIME) {
-			opts[t] |= OPEN_TIME;
-		}
 	}
 	if ((chan->ops[S] & (OP_NEW|OP_RENEW)) && chan->max_messages)
-		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS;
+		opts[S] |= OPEN_OLD|OPEN_NEW|OPEN_FLAGS|OPEN_TIME;
 	if (line)
 		for (srec = svars->srecs; srec; srec = srec->next) {
 			if (srec->status & S_DEAD)
