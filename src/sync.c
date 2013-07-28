@@ -949,7 +949,7 @@ box_selected( int sts, void *aux )
 				opts[1-t] |= OPEN_FLAGS;
 			if (chan->stores[t]->max_size != INT_MAX)
 				opts[1-t] |= OPEN_SIZE;
-			if (chan->keep_modification_time)
+			if (chan->use_internal_date)
 				opts[1-t] |= OPEN_TIME;
 		}
 		if (chan->ops[t] & OP_EXPUNGE) {
