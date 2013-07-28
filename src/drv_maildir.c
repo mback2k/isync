@@ -1172,8 +1172,14 @@ maildir_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 	int ret, fd, bl, uid;
 	char buf[_POSIX_PATH_MAX], nbuf[_POSIX_PATH_MAX], fbuf[NUM_FLAGS + 3], base[128];
 	struct utimbuf utimebuf;
+	time_t mtime;
 
-	bl = nfsnprintf( base, sizeof(base), "%ld.%d_%d.%s", (long)data->time, Pid, ++MaildirCount, Hostname );
+	if (data->time)
+		mtime = data->time;
+	else
+		mtime = time( 0 );
+
+	bl = nfsnprintf( base, sizeof(base), "%ld.%d_%d.%s", (long)mtime, Pid, ++MaildirCount, Hostname );
 	if (!to_trash) {
 #ifdef USE_DB
 		if (ctx->db) {
@@ -1239,8 +1245,8 @@ maildir_store_msg( store_t *gctx, msg_data_t *data, int to_trash,
 	}
 
 	/* Set atime and mtime according to INTERNALDATE or mtime of source message */
-	utimebuf.actime = data->time;
-	utimebuf.modtime = data->time;
+	utimebuf.actime = mtime;
+	utimebuf.modtime = mtime;
 	if (utime( buf, &utimebuf ) < 0) {
 		sys_error( "Maildir error: cannot set times for %s", buf );
 		cb( DRV_BOX_BAD, 0, aux );
