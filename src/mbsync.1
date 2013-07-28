@@ -405,6 +405,18 @@ If \fIcount\fR is 0, the maximum number of messages is \fBunlimited\fR
 (Default: \fI0\fR).
 ..
 .TP
+\fBUseInternalDate\fR \fIyes\fR|\fIno\fR
+Selects whether message time stamps should be kept during the first transfer
+of each message. A modification to the time stamp after a message has already
+been transferred is not synchronized afterwards. Enabling this makes sense in
+order to keep the time stamp based message ordering intact.
+The source of the internal date depends on the store type:
+In IMAP stores the internal date source depends on the underlying mail store.
+In Maildir stores the internal date is the modification time of a message
+which usually corresponds to its arrival or delivery time.
+(Default: \fIno\fR)
+..
+.TP
 \fBSync\fR {\fINone\fR|[\fIPull\fR] [\fIPush\fR] [\fINew\fR] [\fIReNew\fR] [\fIDelete\fR] [\fIFlags\fR]|\fIAll\fR}
 Select the synchronization operation(s) to perform:
 .br
